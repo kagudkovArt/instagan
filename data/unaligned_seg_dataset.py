@@ -1,3 +1,4 @@
+import logging
 import sys
 import os.path
 from data.base_dataset import BaseDataset, get_transform
@@ -20,7 +21,8 @@ class UnalignedSegDataset(BaseDataset):
 		self.root = opt.dataroot
 		self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')
 		self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')
-		self.max_instances = 20  # default: 20
+		#TODO было 20, я махнул на 1, чтобы память не жралась
+		self.max_instances = 1  # default: 20
 		self.seg_dir = 'seg'  # default: 'seg'
 
 		self.A_paths = sorted(make_dataset(self.dir_A))
@@ -36,7 +38,8 @@ class UnalignedSegDataset(BaseDataset):
 	def read_segs(self, seg_path, seed):
 		segs = list()
 		for i in range(self.max_instances):
-			path = seg_path.replace('.png', '_{}.png'.format(i))
+			# path = seg_path.replace('.png', '_{}.png'.format(i))
+			path = seg_path[:-3] + 'png'
 			if os.path.isfile(path):
 				seg = Image.open(path).convert('L')
 				seg = self.fixed_transform(seg, seed)
@@ -68,9 +71,11 @@ class UnalignedSegDataset(BaseDataset):
 		A = self.fixed_transform(A, seed)
 		B = self.fixed_transform(B, seed)
 
-		A_segs = self.read_segs(A_seg_path, seed)
-		B_segs = self.read_segs(B_seg_path, seed)
-
+		try:
+			A_segs = self.read_segs(A_seg_path, seed)
+			B_segs = self.read_segs(B_seg_path, seed)
+		except IndexError as i_e:
+			logging.error(f'not found image segmentation mask {A_seg_path} or {B_seg_path}')
 		if self.opt.direction == 'BtoA':
 			input_nc = self.opt.output_nc
 			output_nc = self.opt.input_nc

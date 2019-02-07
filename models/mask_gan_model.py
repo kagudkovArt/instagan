@@ -8,9 +8,9 @@ import copy
 
 LAMBDA = 10
 
-class InstaGANModel(BaseModel):
+class MaskGANModel(BaseModel):
 	def name(self):
-		return 'InstaGANModel'
+		return 'MaskGANModel'
 
 	@staticmethod
 	def modify_commandline_options(parser, is_train=True):
@@ -134,6 +134,10 @@ class InstaGANModel(BaseModel):
 		self.real_B_seg = self.merge_masks(self.real_B_segs)  # merged mask
 		self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
+	def combine_with_mask(self, with_mask, without_mask, mask):
+		mask_1 = (mask + 1) / 2
+		return with_mask * mask_1 + without_mask * (1 - mask_1)
+
 	def forward(self, idx=0):
 		N = self.opt.ins_per
 		self.real_A_seg_sng = self.real_A_segs[:, N*idx:N*(idx+1), :, :]  # ith mask
@@ -151,6 +155,10 @@ class InstaGANModel(BaseModel):
 
 			self.fake_B_img_sng, self.fake_B_seg_sng = self.split(self.fake_B_sng)
 			self.rec_A_img_sng, self.rec_A_seg_sng = self.split(self.rec_A_sng)
+
+			self.fake_B_img_sng = self.combine_with_mask(self.fake_B_img_sng, self.real_A_img_sng, self.fake_B_seg_sng)
+			self.rec_A_img_sng = self.combine_with_mask(self.rec_A_img_sng, self.real_A_img_sng, self.rec_A_seg_sng)
+
 			fake_B_seg_list = self.fake_B_seg_list + [self.fake_B_seg_sng]  # not detach
 			for i in range(self.ins_iter - idx - 1):
 				fake_B_seg_list.append(empty)
@@ -166,6 +174,10 @@ class InstaGANModel(BaseModel):
 
 			self.fake_A_img_sng, self.fake_A_seg_sng = self.split(self.fake_A_sng)
 			self.rec_B_img_sng, self.rec_B_seg_sng = self.split(self.rec_B_sng)
+
+			self.fake_A_img_sng = self.combine_with_mask(self.fake_A_img_sng, self.real_B_img_sng, self.fake_A_seg_sng)
+			self.rec_B_img_sng = self.combine_with_mask(self.rec_B_img_sng, self.real_B_img_sng, self.rec_B_seg_sng)
+
 			fake_A_seg_list = self.fake_A_seg_list + [self.fake_A_seg_sng]  # not detach
 			for i in range(self.ins_iter - idx - 1):
 				fake_A_seg_list.append(empty)
