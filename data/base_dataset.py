@@ -1,6 +1,8 @@
+from copy import deepcopy
+
 import torch.utils.data as data
-from PIL import Image
 import torchvision.transforms as transforms
+from PIL import Image
 
 
 class BaseDataset(data.Dataset):
@@ -24,7 +26,15 @@ class BaseDataset(data.Dataset):
 def get_transform(opt):
     transform_list = []
     # Modify transform to specify width and height
-    if opt.resize_or_crop == 'resize_and_crop':
+    if opt.crop_eye_area:
+        osize = [opt.loadSizeH, opt.loadSizeW]
+        fsize = [opt.loadSizeH * 88 // 256, opt.loadSizeW]
+        transform_list.append(transforms.Resize(osize, Image.BICUBIC))
+        transform_list.append(transforms.CenterCrop(fsize))
+        fsize = [opt.loadSizeH * 88 // 256, opt.fineSizeW]
+        transform_list.append(transforms.RandomCrop(fsize))
+
+    elif opt.resize_or_crop == 'resize_and_crop':
         osize = [opt.loadSizeH, opt.loadSizeW]
         fsize = [opt.fineSizeH, opt.fineSizeW]
         transform_list.append(transforms.Resize(osize, Image.BICUBIC))
@@ -52,10 +62,19 @@ def get_transform(opt):
     if opt.isTrain and not opt.no_flip:
         transform_list.append(transforms.RandomHorizontalFlip())
 
+    transform_list_seq = deepcopy(transform_list)
+
+    if opt.add_color_aug and opt.isTrain:
+        transform_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.5, saturation=0.15, hue=0.15))
+
     transform_list += [transforms.ToTensor(),
                        transforms.Normalize((0.5, 0.5, 0.5),
                                             (0.5, 0.5, 0.5))]
-    return transforms.Compose(transform_list)
+    transform_list_seq += [transforms.ToTensor(),
+                           transforms.Normalize((0.5, 0.5, 0.5),
+                                                (0.5, 0.5, 0.5))]
+
+    return transforms.Compose(transform_list), transforms.Compose(transform_list_seq)
 
 
 # just modify the width and height to be multiple of 4

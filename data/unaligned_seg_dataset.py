@@ -29,11 +29,15 @@ class UnalignedSegDataset(BaseDataset):
 		self.B_paths = sorted(make_dataset(self.dir_B))
 		self.A_size = len(self.A_paths)
 		self.B_size = len(self.B_paths)
-		self.transform = get_transform(opt)
+		self.transform, self.transform_seg = get_transform(opt)
 
 	def fixed_transform(self, image, seed):
 		random.seed(seed)
 		return self.transform(image)
+
+	def fixed_transform_seg(self, seg, seed):
+		random.seed(seed)
+		return self.transform_seg(seg)
 
 	def read_segs(self, seg_path, seed):
 		segs = list()
@@ -42,7 +46,7 @@ class UnalignedSegDataset(BaseDataset):
 			path = seg_path[:-3] + 'png'
 			if os.path.isfile(path):
 				seg = Image.open(path).convert('L')
-				seg = self.fixed_transform(seg, seed)
+				seg = self.fixed_transform_seg(seg, seed)
 				segs.append(seg)
 			else:
 				segs.append(-torch.ones(segs[0].size()))
@@ -76,6 +80,7 @@ class UnalignedSegDataset(BaseDataset):
 			B_segs = self.read_segs(B_seg_path, seed)
 		except IndexError as i_e:
 			logging.error(f'not found image segmentation mask {A_seg_path} or {B_seg_path}')
+			return self.__getitem__(index + 1)
 		if self.opt.direction == 'BtoA':
 			input_nc = self.opt.output_nc
 			output_nc = self.opt.input_nc
