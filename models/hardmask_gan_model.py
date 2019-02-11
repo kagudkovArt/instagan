@@ -1,20 +1,20 @@
+import torch
 import itertools
 
-import numpy as np
-import torch
 from torch import nn
 
 from util.image_pool import ImagePool
-from . import networks
 from .base_model import BaseModel
+from . import networks
+import numpy as np
+import copy
 
 LAMBDA = 10
 DIS_LAMBDA = 0.5
 
-
-class MaskGANModel(BaseModel):
+class HardMaskGANModel(BaseModel):
     def name(self):
-        return 'MaskGANModel'
+        return 'HardMaskGANModel'
 
     @staticmethod
     def modify_commandline_options(parser, is_train=True):
@@ -187,8 +187,8 @@ class MaskGANModel(BaseModel):
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def combine_with_mask(self, with_mask, without_mask, mask):
-        mask_1 = self.gaus_filter(mask)
-        mask_1 = (mask_1 + 1) / 2
+        mask_1 = (mask + 1) / 2
+        mask_1 = self.gaus_filter(mask_1)
         return with_mask * mask_1 + without_mask * (1 - mask_1)
 
     def forward(self, idx=0):
@@ -209,8 +209,8 @@ class MaskGANModel(BaseModel):
             self.fake_B_img_sng, self.fake_B_seg_sng = self.split(self.fake_B_sng)
             self.rec_A_img_sng, self.rec_A_seg_sng = self.split(self.rec_A_sng)
 
-            self.fake_B_img_sng = self.combine_with_mask(self.fake_B_img_sng, self.real_A_img_sng, self.fake_B_seg_sng)
-            self.rec_A_img_sng = self.combine_with_mask(self.rec_A_img_sng, self.real_A_img_sng, self.rec_A_seg_sng)
+            self.fake_B_img_sng = self.combine_with_mask(self.fake_B_img_sng, self.real_A_img_sng, self.real_A_seg_sng)
+            self.rec_A_img_sng = self.combine_with_mask(self.rec_A_img_sng, self.real_A_img_sng, self.real_A_seg_sng)
 
             fake_B_seg_list = self.fake_B_seg_list + [self.fake_B_seg_sng]  # not detach
             for i in range(self.ins_iter - idx - 1):
@@ -228,8 +228,8 @@ class MaskGANModel(BaseModel):
             self.fake_A_img_sng, self.fake_A_seg_sng = self.split(self.fake_A_sng)
             self.rec_B_img_sng, self.rec_B_seg_sng = self.split(self.rec_B_sng)
 
-            self.fake_A_img_sng = self.combine_with_mask(self.fake_A_img_sng, self.real_B_img_sng, self.fake_A_seg_sng)
-            self.rec_B_img_sng = self.combine_with_mask(self.rec_B_img_sng, self.real_B_img_sng, self.rec_B_seg_sng)
+            self.fake_A_img_sng = self.combine_with_mask(self.fake_A_img_sng, self.real_B_img_sng, self.real_B_seg_sng)
+            self.rec_B_img_sng = self.combine_with_mask(self.rec_B_img_sng, self.real_B_img_sng, self.real_B_seg_sng)
 
             fake_A_seg_list = self.fake_A_seg_list + [self.fake_A_seg_sng]  # not detach
             for i in range(self.ins_iter - idx - 1):
