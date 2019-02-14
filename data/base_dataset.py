@@ -64,7 +64,7 @@ def get_transform(opt):
 
     transform_list_seq = deepcopy(transform_list)
 
-    if opt.add_color_aug and opt.isTrain:
+    if opt.isTrain and opt.add_color_aug:
         transform_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.5, saturation=0.15, hue=0.15))
 
     transform_list += [transforms.ToTensor(),
@@ -72,7 +72,8 @@ def get_transform(opt):
                                             (0.5, 0.5, 0.5))]
     transform_list_seq += [transforms.ToTensor(),
                            transforms.Normalize((0.5, 0.5, 0.5),
-                                                (0.5, 0.5, 0.5))]
+                                                (0.5, 0.5, 0.5))
+                           ]
 
     return transforms.Compose(transform_list), transforms.Compose(transform_list_seq)
 

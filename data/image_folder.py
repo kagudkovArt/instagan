@@ -28,9 +28,10 @@ def make_dataset(dir):
     for root, _, fnames in sorted(os.walk(dir + '_seg')):
         for fname in sorted(fnames):
             if is_image_file(fname):
-                path = os.path.join(root[:-4], fname[:-3] + 'jpg')
-                if os.path.exists(path):
-                    images.append(path)
+                for type in ('jpg', 'png'):
+                    path = os.path.join(root[:-4], fname[:-3] + type)
+                    if os.path.exists(path):
+                        images.append(path)
 
     return images
 
