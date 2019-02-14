@@ -51,6 +51,7 @@ class BaseOptions():
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{netG}_size{loadSize}')
         parser.add_argument('--use_gradient_penalty', action='store_true', help='use gradient penalty while training')
+        parser.add_argument('--crop_eye_area', action='store_true', help='if scecified, crop zone around eyes for train')
 
         self.initialized = True
         return parser

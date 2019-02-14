@@ -12,6 +12,7 @@ class TestOptions(BaseOptions):
         parser.add_argument('--eval', action='store_true', help='use eval mode during test time.')
         parser.add_argument('--num_test', type=int, default=50, help='how many test images to run')
 
+
         parser.set_defaults(model='test')
         # To avoid cropping, the loadSize should be the same as fineSize
         parser.set_defaults(loadSize=parser.get_default('fineSize'))

@@ -35,7 +35,7 @@ class MaskGANModel(BaseModel):
 
     @staticmethod
     # From https://discuss.pytorch.org/t/is-there-anyway-to-do-gaussian-filtering-for-an-image-2d-3d-in-pytorch/12351/3
-    def get_gaussian_kernel(kernel_size=3, sigma=2, channels=3):
+    def get_gaussian_kernel(kernel_size=5, sigma=2, channels=3):
         # Create a x, y coordinate grid of shape (kernel_size, kernel_size, 2)
         x_coord = torch.arange(kernel_size)
         x_grid = x_coord.repeat(kernel_size).view(kernel_size, kernel_size)
@@ -104,7 +104,9 @@ class MaskGANModel(BaseModel):
                                             opt.init_type, opt.init_gain, self.gpu_ids)
             self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD, opt.n_layers_D, opt.norm, use_sigmoid,
                                             opt.init_type, opt.init_gain, self.gpu_ids)
-
+            # from torchsummary import summary
+            # summary(self.netD_A, (4, 256, 256))
+            # exit(0)
         if self.isTrain:
             self.fake_A_pool = ImagePool(opt.pool_size)
             self.fake_B_pool = ImagePool(opt.pool_size)
@@ -210,6 +212,7 @@ class MaskGANModel(BaseModel):
             self.rec_A_img_sng, self.rec_A_seg_sng = self.split(self.rec_A_sng)
 
             self.fake_B_img_sng = self.combine_with_mask(self.fake_B_img_sng, self.real_A_img_sng, self.fake_B_seg_sng)
+            self.rec_A_img_sng_source = self.rec_A_img_sng
             self.rec_A_img_sng = self.combine_with_mask(self.rec_A_img_sng, self.real_A_img_sng, self.rec_A_seg_sng)
 
             fake_B_seg_list = self.fake_B_seg_list + [self.fake_B_seg_sng]  # not detach
@@ -229,6 +232,8 @@ class MaskGANModel(BaseModel):
             self.rec_B_img_sng, self.rec_B_seg_sng = self.split(self.rec_B_sng)
 
             self.fake_A_img_sng = self.combine_with_mask(self.fake_A_img_sng, self.real_B_img_sng, self.fake_A_seg_sng)
+            self.rec_B_img_sng_source = self.rec_B_img_sng
+
             self.rec_B_img_sng = self.combine_with_mask(self.rec_B_img_sng, self.real_B_img_sng, self.rec_B_seg_sng)
 
             fake_A_seg_list = self.fake_A_seg_list + [self.fake_A_seg_sng]  # not detach
