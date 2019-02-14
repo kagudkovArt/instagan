@@ -71,6 +71,13 @@ class Visualizer():
 
     # |visuals|: dictionary of images to display or save
     def display_current_results(self, visuals, epoch, save_result):
+        #TODO сделать здесь нормальную визуализацию
+        for label, image in visuals.items():
+            if image.shape[1] == 5:
+                image[image > 255] = 255
+                visuals[label] = image[:, :3, :, :]
+
+
         if self.display_id > 0:  # show images in the browser
             ncols = self.ncols
             if ncols > 0:
