@@ -51,7 +51,7 @@ class SegUnalignedSegDataset(BaseDataset):
 				assert np.max(np.array(seg)) <= NSEG_CLASSES, '0 thrash class, other classes is useful'
 				seg_ = np.zeros((NSEG_CLASSES, *seg.shape))
 				for i in range(NSEG_CLASSES):
-					seg_[i][seg == i + 1] = 255
+					seg_[i][seg == i + 1] = 1
 				seg = []
 				for i in range(NSEG_CLASSES):
 					seg.append(self.fixed_transform_seg(Image.fromarray(seg_[i]), seed))
