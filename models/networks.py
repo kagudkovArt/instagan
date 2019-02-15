@@ -672,7 +672,7 @@ class SegNLayerSetDiscriminator(nn.Module):
         kw = 4
         padw = 1
         self.feature_img = self.get_feature_extractor(input_nc, ndf, n_layers, kw, padw, norm_layer, use_bias)
-        self.feature_seg = self.get_feature_extractor(NSEG_CLASSES, ndf, n_layers, kw, padw, norm_layer, use_bias)
+        self.feature_seg = self.get_feature_extractor(1, ndf, n_layers, kw, padw, norm_layer, use_bias)
         self.classifier = self.get_classifier(2 * ndf, n_layers, kw, padw, norm_layer, use_sigmoid)  # 2*ndf
 
     def get_feature_extractor(self, input_nc, ndf, n_layers, kw, padw, norm_layer, use_bias):
@@ -712,7 +712,7 @@ class SegNLayerSetDiscriminator(nn.Module):
     def forward(self, inp):
         # split data
         img = inp[:, :self.input_nc, :, :]  # (B, CX, W, H)
-        segs = inp[:, self.input_nc:, :, :]  # (B, CA, W, H)
+        segs = inp[:, self.input_nc:self.input_nc+1, :, :]  # (B, CA, W, H)
         mean = (segs + 1).mean(0).mean(-1).mean(-1)
         if mean.sum() == 0:
             mean[0] = 1  # forward at least one segmentation

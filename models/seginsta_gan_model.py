@@ -263,12 +263,14 @@ class SegInstaGANModel(BaseModel):
 		self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
 		if self.opt.use_gradient_penalty:
 			self.loss_grad_A = self.calc_gradient_penalty(self.netD_A, self.real_B.data, fake_B.data)
+			self.loss_D_A += self.loss_grad_A
 
 	def backward_D_B(self):
 		fake_A = self.fake_A_pool.query(self.fake_A_mul)
 		self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
 		if self.opt.use_gradient_penalty:
 			self.loss_grad_B = self.calc_gradient_penalty(self.netD_B, self.real_A.data, fake_A.data)
+			self.loss_D_B += self.loss_grad_B
 
 	def optimize_parameters(self):
 		# init setting
